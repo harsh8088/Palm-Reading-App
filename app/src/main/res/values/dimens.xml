@@ -1,0 +1,54 @@
+<!-- Default screen margins, per the Android Design guidelines. -->
+<resources>
+    <dimen name="padding_tiny">2dp</dimen>
+    <dimen name="padding_small">4dp</dimen>
+    <dimen name="padding_smedium">6dp</dimen>
+    <dimen name="padding_medium">8dp</dimen>
+    <dimen name="padding_mlarge">12dp</dimen>
+    <dimen name="padding_large">16dp</dimen>
+    <dimen name="padding_xlarge">32dp</dimen>
+    <!-- Standard Margin for app -->
+    <dimen name="margin_tiny">2dp</dimen>
+    <dimen name="margin_small">4dp</dimen>
+    <dimen name="margin_smedium">6dp</dimen>
+    <dimen name="margin_medium">8dp</dimen>
+    <dimen name="margin_mlarge">12dp</dimen>
+    <dimen name="margin_large">16dp</dimen>
+    <dimen name="margin_xlarge">24dp</dimen>
+    <dimen name="margin_xxlarge">32dp</dimen>
+    <dimen name="margin_huge">64dp</dimen>
+    <!-- Standard Font size for app -->
+    <dimen name="font_tiny">10sp</dimen>
+    <dimen name="font_small">12sp</dimen>
+    <dimen name="font_smedium">14sp</dimen>
+    <dimen name="font_medium">16sp</dimen>
+    <dimen name="font_mlarge">18sp</dimen>
+    <dimen name="font_large">20sp</dimen>
+    <dimen name="font_xlarge">24sp</dimen>
+    <dimen name="font_xxlarge">28sp</dimen>
+    <dimen name="font_huge">32sp</dimen>
+    <!-- Standard Image Dimensions -->
+    <dimen name="thumb_micro">16dp</dimen>
+    <dimen name="thumb_tiny">24dp</dimen>
+    <dimen name="thumb_small">32dp</dimen>
+    <dimen name="thumb_xsmall">36dp</dimen>
+    <dimen name="thumb_medium">48dp</dimen>
+    <!-- Button Width-->
+    <dimen name="btn_height">42dp</dimen>
+    <dimen name="cardCorner_radius_small">4dp</dimen>
+    <dimen name="lead_option_width">160dp</dimen>
+    <dimen name="dialog_width">280dp</dimen>
+    <dimen name="tab_indicator_height">2dp</dimen>
+    <dimen name="ld_user_thumb">145dp</dimen>
+    <dimen name="ld_progress">180dp</dimen>
+    <dimen name="bottom_bar_height">48dp</dimen>
+    <dimen name="dialog_btn_min_width">88dp</dimen>
+    <dimen name="loading_size">32dp</dimen>
+    <dimen name="map_height">160dp</dimen>
+    <dimen name="list_option_width">80dp</dimen>
+    <dimen name="progress_bar_width">56dp</dimen>
+    <dimen name="progress_bar_height">56dp</dimen>
+    <dimen name="img_logo_width">200dp</dimen>
+    <dimen name="toolbar_subtext_min_width">24dp</dimen>
+    <dimen name="filter_width">140dp</dimen>
+</resources>
