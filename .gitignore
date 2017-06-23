@@ -9,3 +9,5 @@
 .externalNativeBuild
 /openCVLibrary320
 /app/build
+/app/src/mainjniLibs
+/.idea
