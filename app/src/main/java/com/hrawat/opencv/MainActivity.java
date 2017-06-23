@@ -185,13 +185,16 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
 //            findDesaturation(bitmap, image);
             Mat src = new Mat();
             Utils.bitmapToMat(bitmap, src);
-            Mat thres = applyThreshold(src);
-            Mat floodMat = floodFill(thres);
-            Imgproc.Canny(floodMat, floodMat, 50, 70);
-            locateSpecialPoints(floodMat);
+
+            Mat output=removeNoise(src);
+
+//            Mat thres = applyThreshold(src);
+//            Mat floodMat = floodFill(thres);
+//            Imgproc.Canny(floodMat, floodMat, 50, 70);
+//            locateSpecialPoints(floodMat);
 //            drawImageOutline(bitmap, image);
             final Bitmap bmp = Bitmap.createBitmap(src.cols(), src.rows(), Bitmap.Config.ARGB_8888);
-            Utils.matToBitmap(floodMat, bmp);
+            Utils.matToBitmap(output, bmp);
             image.setImageBitmap(bmp);
 
 //            mat = applyDesaturation(mat);
@@ -218,6 +221,21 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
             });
             dialog.show();
         }
+    }
+
+    private Mat removeNoise(Mat src) {
+       //gray
+        Imgproc.cvtColor(src, src, Imgproc.COLOR_RGBA2GRAY);
+       // performed adaptive threshold using Gaussian filter:
+        Imgproc.adaptiveThreshold(src, src, 255,
+                Imgproc.ADAPTIVE_THRESH_GAUSSIAN_C, Imgproc.THRESH_BINARY, 11, 2);
+
+        Imgproc.morphologyEx( src, src, 1,
+                Imgproc.getStructuringElement(Imgproc.MORPH_ELLIPSE, new Size(4,4)) );
+        // highlight
+        Imgproc.dilate(src, src, Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new Size(1, 1)));
+
+        return src;
     }
 
     private void locateSpecialPoints(Mat floodMat) {
@@ -257,7 +275,7 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
      */
     private Mat applyThreshold(Mat src) {
         Imgproc.cvtColor(src, src, Imgproc.COLOR_RGBA2GRAY);
-//        Imgproc.adaptiveThreshold(output, output, 255, Imgproc.ADAPTIVE_THRESH_GAUSSIAN_C, Imgproc.THRESH_BINARY, 11, 2);
+//        Imgproc.adaptiveThreshold(src, src, 255, Imgproc.ADAPTIVE_THRESH_GAUSSIAN_C, Imgproc.THRESH_BINARY, 11, 2);
         Imgproc.threshold(src, src, 50, 100, Imgproc.THRESH_BINARY);
         return floodFill(src);
     }

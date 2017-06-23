@@ -145,7 +145,7 @@ public class ReadPalmActivity extends AppCompatActivity implements View.OnClickL
         // first i load the input matrix, then i made a matrix pattern with the new size,
         // then i flip it (so the image flip by 90 degrees) and
         // finally i return to the original matrix size.
-        mRgba = inputFrame.rgba();
+        mRgba = inputFrame.gray();
 //        mGrey = inputFrame.gray();
 //        mGrey = mGrey.t();
 //        Core.flip(mGrey, mGrey, -1);

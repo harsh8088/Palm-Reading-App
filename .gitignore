@@ -7,3 +7,5 @@
 /build
 /captures
 .externalNativeBuild
+/openCVLibrary320
+/app/build
