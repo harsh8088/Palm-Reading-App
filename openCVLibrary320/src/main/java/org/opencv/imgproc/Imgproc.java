@@ -4,9 +4,6 @@
 //
 package org.opencv.imgproc;
 
-import java.lang.String;
-import java.util.ArrayList;
-import java.util.List;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfFloat;
 import org.opencv.core.MatOfInt;
@@ -20,6 +17,9 @@ import org.opencv.core.Scalar;
 import org.opencv.core.Size;
 import org.opencv.core.TermCriteria;
 import org.opencv.utils.Converters;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class Imgproc {
 
@@ -1110,7 +1110,7 @@ public class Imgproc {
     }
 
     //javadoc: HoughLines(image, lines, rho, theta, threshold)
-    public static void HoughLines(Mat image, Mat lines, double rho, double theta, int threshold)
+    public static void HoughLines(Mat image, Mat lines, int i1, int i, double rho, double theta, int threshold)
     {
         
         HoughLines_1(image.nativeObj, lines.nativeObj, rho, theta, threshold);

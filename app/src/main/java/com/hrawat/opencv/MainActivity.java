@@ -11,6 +11,7 @@ import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
+import android.os.Handler;
 import android.provider.MediaStore;
 import android.support.design.widget.NavigationView;
 import android.support.v4.widget.DrawerLayout;
@@ -180,35 +181,95 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
             dialog.setContentView(R.layout.image_dialog);
             dialog.setTitle("Image");
             // find the imageview and draw it!
-            ImageView image = (ImageView) dialog.findViewById(R.id.image);
+            final ImageView image = (ImageView) dialog.findViewById(R.id.image);
             final Bitmap bitmap = BitmapFactory.decodeFile(filePath.replace("file:////", ""));
-//            findDesaturation(bitmap, image);
-            Mat src = new Mat();
-            Utils.bitmapToMat(bitmap, src);
-
-            Mat output=removeNoise(src);
-
-//            Mat thres = applyThreshold(src);
-//            Mat floodMat = floodFill(thres);
-//            Imgproc.Canny(floodMat, floodMat, 50, 70);
-//            locateSpecialPoints(floodMat);
-//            drawImageOutline(bitmap, image);
-            final Bitmap bmp = Bitmap.createBitmap(src.cols(), src.rows(), Bitmap.Config.ARGB_8888);
-            Utils.matToBitmap(output, bmp);
-            image.setImageBitmap(bmp);
-
-//            mat = applyDesaturation(mat);
-//            Imgproc.cvtColor(mat, mat, Imgproc.COLOR_RGBA2GRAY);
+            image.setImageBitmap(bitmap);
+//           mat = applyDesaturation(mat);
+//           Imgproc.cvtColor(mat, mat, Imgproc.COLOR_RGBA2GRAY);
             /**Laplacian uses the gradient of images, it calls internally the Sobel operator
              * to perform its computation. */
 //            Imgproc.Laplacian(mat, mat, 3);
+            Button buttonSrc = (Button) dialog.findViewById(R.id.dialogButtonSource);
+            // if button is clicked, close the custom dialog
+            buttonSrc.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    image.setImageBitmap(bitmap);
+                }
+            });
+            Button buttonT1 = (Button) dialog.findViewById(R.id.dialogButtonT1);
+            // if button is clicked, close the custom dialog
+            buttonT1.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    new Handler().postDelayed(new Runnable() {
+                        public void run() {
+                            // findDesaturation(bitmap, image);
+                            Mat src = new Mat();
+                            Utils.bitmapToMat(bitmap, src);
+                            removeNoise(src);
+//          Imgproc.medianBlur(src,src,10);
+                            applyThreshold(src);
+                            floodFill(src);
+                            Imgproc.Canny(src, src, 50, 70);
+//            applyHoughLines(floodMat);
+//            locateSpecialPoints(floodMat);
+//            drawImageOutline(bitmap, image);
+                            final Bitmap bmp = Bitmap.createBitmap(src.cols(), src.rows(), Bitmap.Config.ARGB_8888);
+                            Utils.matToBitmap(src, bmp);
+                            image.setImageBitmap(bmp);
+                        }
+                    }, 1000);
+                }
+            });
+            Button buttonT2 = (Button) dialog.findViewById(R.id.dialogButtonT2);
+            // if button is clicked, close the custom dialog
+            buttonT2.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    Mat src = new Mat();
+                    Utils.bitmapToMat(bitmap, src);
+                    Imgproc.cvtColor(src, src, Imgproc.COLOR_RGBA2GRAY);
+                    Imgproc.adaptiveThreshold(src, src, 255, Imgproc.ADAPTIVE_THRESH_GAUSSIAN_C, Imgproc.THRESH_BINARY, 11, 2);
+                    final Bitmap bmp = Bitmap.createBitmap(src.cols(), src.rows(), Bitmap.Config.ARGB_8888);
+                    Utils.matToBitmap(src, bmp);
+                    image.setImageBitmap(bmp);
+                }
+            });
+            Button buttonLines = (Button) dialog.findViewById(R.id.dialogButtonLines);
+            // if button is clicked, close the custom dialog
+            buttonLines.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    Mat src = new Mat();
+                    Utils.bitmapToMat(bitmap, src);
+                    Imgproc.cvtColor(src, src, Imgproc.COLOR_RGBA2GRAY);
+                    Mat croppedMat = new Mat(src, new Rect(150, 500, 400, 300));
+//                  Mat houghMat= applyHoughLines(croppedMat);
+                    Imgproc.medianBlur(croppedMat, croppedMat, 5);
+//                    Imgproc.Canny(croppedMat, croppedMat, 20, 60);
+                    final Bitmap bmp = Bitmap.createBitmap(croppedMat.cols(), croppedMat.rows(), Bitmap.Config.ARGB_8888);
+                    Utils.matToBitmap(croppedMat, bmp);
+                    image.setImageBitmap(bmp);
+                }
+            });
+
+            Button buttonBoundary= (Button) dialog.findViewById(R.id.dialogButtonBoundary);
+            // if button is clicked, close the custom dialog
+            buttonBoundary.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    drawBoundary(image,bitmap);
+
+                }
+            });
 
             Button buttonHistogram = (Button) dialog.findViewById(R.id.dialogButtonHistogram);
             // if button is clicked, close the custom dialog
             buttonHistogram.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    drawHistogram(bmp);
+                    drawHistogram(image, bitmap);
                 }
             });
             Button dialogButton = (Button) dialog.findViewById(R.id.dialogButtonOK);
@@ -223,19 +284,40 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
         }
     }
 
-    private Mat removeNoise(Mat src) {
-       //gray
+    /**
+     * HoughLines function takes a single channel binary image, processed through
+     * the Canny edge detection filter.
+     * HoughLines finds lines in a binary image using the standard Hough transform.
+     */
+    private Mat applyHoughLines(Mat floodMat) {
+        int threshold = 10;
+        int minLineSize = 5;
+        int lineGap = 10;
+        Mat lines = new Mat();
+        Imgproc.HoughLinesP(floodMat, lines, 1, Math.PI / 180, threshold, minLineSize, lineGap);
+        for (int x = 0; x < lines.rows(); x++) {
+            double[] vec = lines.get(x, 0);
+            double x1 = vec[0],
+                    y1 = vec[1],
+                    x2 = vec[2],
+                    y2 = vec[3];
+            Point start = new Point(x1, y1);
+            Point end = new Point(x2, y2);
+            Imgproc.line(floodMat, start, end, new Scalar(255, 0, 0), 3);
+        }
+        return floodMat;
+    }
+
+    private void removeNoise(Mat src) {
+        //gray
         Imgproc.cvtColor(src, src, Imgproc.COLOR_RGBA2GRAY);
-       // performed adaptive threshold using Gaussian filter:
+        // performed adaptive threshold using Gaussian filter:
         Imgproc.adaptiveThreshold(src, src, 255,
                 Imgproc.ADAPTIVE_THRESH_GAUSSIAN_C, Imgproc.THRESH_BINARY, 11, 2);
-
-        Imgproc.morphologyEx( src, src, 1,
-                Imgproc.getStructuringElement(Imgproc.MORPH_ELLIPSE, new Size(4,4)) );
+        Imgproc.morphologyEx(src, src, 1,
+                Imgproc.getStructuringElement(Imgproc.MORPH_ELLIPSE, new Size(4, 4)));
         // highlight
         Imgproc.dilate(src, src, Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new Size(1, 1)));
-
-        return src;
     }
 
     private void locateSpecialPoints(Mat floodMat) {
@@ -248,7 +330,6 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
         Point high = new Point();
         Point med = new Point();
         Point low = new Point();
-
         for (MatOfPoint mop : contours) {
             for (Point p : mop.toList()) {
                 if (p.y >= high.y)
@@ -274,10 +355,10 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
      * adaptive thresholding.
      */
     private Mat applyThreshold(Mat src) {
-        Imgproc.cvtColor(src, src, Imgproc.COLOR_RGBA2GRAY);
+//        Imgproc.cvtColor(src, src, Imgproc.COLOR_RGBA2GRAY);
 //        Imgproc.adaptiveThreshold(src, src, 255, Imgproc.ADAPTIVE_THRESH_GAUSSIAN_C, Imgproc.THRESH_BINARY, 11, 2);
         Imgproc.threshold(src, src, 50, 100, Imgproc.THRESH_BINARY);
-        return floodFill(src);
+        return src;
     }
 
     private static Mat applyDilade(Mat img) {
@@ -291,9 +372,13 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
         return dst;
     }
 
-    private static Mat floodFill(Mat img) {
-        Mat floodfilled = Mat.zeros(img.rows() + 2, img.cols() + 2, CvType.CV_8U);
-        Imgproc.floodFill(img, floodfilled, new Point(300, 350), new Scalar(255), new Rect(),
+    /**
+     * floodFill fill a connected component starting from
+     * the seed point with the specified color.
+     */
+    private void floodFill(Mat src) {
+        Mat floodfilled = Mat.zeros(src.rows() + 2, src.cols() + 2, CvType.CV_8U);
+        Imgproc.floodFill(src, floodfilled, new Point(300, 350), new Scalar(255), new Rect(),
                 new Scalar(0), new Scalar(0), 4 + (255 << 8) + Imgproc.FLOODFILL_MASK_ONLY);
 //        Core.subtract(floodfilled, Scalar.all(0), floodfilled);
 //        Rect roi = new Rect(1, 1, img.cols() - 2, img.rows() - 2);
@@ -301,7 +386,6 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
 //        floodfilled.submat(roi).copyTo(temp);
 //        img = temp;
         //Core.bitwise_not(img, img);
-        return img;
     }
 
     private void findDesaturation(Bitmap bitmap, ImageView imageView) {
@@ -312,7 +396,8 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
         threshold(gray, gray, 70, 100, ADAPTIVE_THRESH_MEAN_C);
 //      Imgproc.adaptiveThreshold(gray, gray, 100, ADAPTIVE_THRESH_MEAN_C, THRESH_BINARY, 15, 40);
         //Fills a connected component with the given color.
-        Imgproc.floodFill(gray, new Mat(gray.height() + 2, gray.width() + 2, CvType.CV_8UC1), new Point(0, 0), new Scalar(0, 255, 0));
+        Imgproc.floodFill(gray, new Mat(gray.height() + 2, gray.width() + 2, CvType.CV_8UC1),
+                new Point(0, 0), new Scalar(0, 255, 0));
         Bitmap bmp = Bitmap.createBitmap(gray.cols(), gray.rows(), Bitmap.Config.ARGB_8888);
         Utils.matToBitmap(gray, bmp);
         imageView.setImageBitmap(bmp);
@@ -344,11 +429,7 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
         image.setImageBitmap(bmp);
     }
 
-    private void drawHistogram(Bitmap bitmap) {
-        final Dialog dialog = new Dialog(this, android.R.style.Theme_Black_NoTitleBar_Fullscreen);
-        dialog.setContentView(R.layout.image_dialog);
-        dialog.setTitle("Image");
-        ImageView image = (ImageView) dialog.findViewById(R.id.image);
+    private void drawHistogram(ImageView image, Bitmap bitmap) {
         try {
             Mat rgba = new Mat();
             Utils.bitmapToMat(bitmap, rgba);
@@ -383,19 +464,38 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
         } catch (Exception e) {
             e.printStackTrace();
         }
-        Button buttonHistogram = (Button) dialog.findViewById(R.id.dialogButtonHistogram);
-        buttonHistogram.setVisibility(View.GONE);
-        // if button is clicked, close the custom dialog
-        Button dialogButton = (Button) dialog.findViewById(R.id.dialogButtonOK);
-        // if button is clicked, close the custom dialog
-        dialogButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                dialog.dismiss();
-            }
-        });
-        dialog.show();
     }
+
+    private void drawBoundary(ImageView image, Bitmap bitmap) {
+        try {
+            Mat mat = new Mat();
+            Mat colorMat=new Mat();
+            Utils.bitmapToMat(bitmap, mat);
+            mat.copyTo(colorMat);
+            Imgproc.cvtColor(mat, mat, Imgproc.COLOR_BGR2GRAY);
+            Imgproc.GaussianBlur(mat, mat, new Size(5, 5), 0);
+
+            /** if background is dark use THRESH_BINARY and if light THRESH_BINARY_INV */
+      //      Imgproc.threshold(mat, mat, 45, 255, Imgproc.THRESH_BINARY_INV);
+            Imgproc.threshold(mat, mat, 45, 255, Imgproc.THRESH_BINARY);
+            Mat element = Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new  Size(2*5 + 1, 2*5+1));
+
+            Imgproc.erode(mat, mat, element);
+            Imgproc.dilate(mat, mat,element);
+
+            List<MatOfPoint> mcontours = new ArrayList<>();
+            Mat hierarchy = new Mat();
+
+            Imgproc.findContours(mat, mcontours, hierarchy, Imgproc.RETR_EXTERNAL,
+                    Imgproc.CHAIN_APPROX_SIMPLE, new Point(0, 0));
+            Imgproc.drawContours(colorMat, mcontours, -1, new Scalar(0, 255, 255), 2);
+                Bitmap histBitmap = Bitmap.createBitmap(colorMat.cols(), colorMat.rows(), Bitmap.Config.ARGB_8888);
+                Utils.matToBitmap(colorMat, histBitmap);
+                BitmapHelper.showBitmap(this, histBitmap, image);
+            } catch(Exception e){
+                e.printStackTrace();
+            }
+        }
 
     private void calculationsOnHistogram(Mat histogram) {
         SparseArray<ArrayList<Float>> compartments = HistogramHelper.createCompartments(histogram);
